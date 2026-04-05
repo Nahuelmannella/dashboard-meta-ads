@@ -1,0 +1,36 @@
+# Environment variables & credentials - NEVER commit
+.env
+.env.*
+!.env.example
+.mcp.json
+
+# Dependencies
+node_modules/
+
+# Build output
+dashboard/dist/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temp
+*.tmp
+
+# Claude / AI assistants
+.claude/
+
+# Legacy folders from other projects (kept locally, not for the repo)
+mcp/
+skill/
