@@ -90,4 +90,31 @@ export function SummaryKPIs({ row, currency }: SummaryKPIsProps) {
           : undefined,
       },
     )
-  } else
+  } else {
+    // Non-sales objectives: show primary result + cost per result
+    kpis.push(
+      {
+        label: primary.label,
+        value: primary.value ? primary.value.toLocaleString('es-MX') : '—',
+        color: primary.value > 0 ? 'var(--accent-blue)' : undefined,
+      },
+      {
+        label: primary.costLabel,
+        value: primary.cost ? <SensitiveNumber value={primary.cost} format="currency" currency={currency} /> : '—',
+      },
+    )
+  }
+
+  return (
+    <div className="summary-kpis">
+      {kpis.map((kpi) => (
+        <div key={kpi.label} className="kpi-item">
+          <span className="kpi-label">{kpi.label}</span>
+          <span className="kpi-value" style={kpi.color ? { color: kpi.color } : undefined}>
+            {kpi.value}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}

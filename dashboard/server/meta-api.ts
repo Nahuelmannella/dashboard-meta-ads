@@ -152,4 +152,81 @@ export async function getAdSetInsights(accountId: string, timeRange?: string, da
   ])
   return rows.map((r) => {
     const meta = r.adset_id ? adsetMap.get(r.adset_id) : undefined
-    c
+    const campaignId = meta?.campaign_id || r.campaign_id
+    return {
+      ...r,
+      campaign_objective: campaignId ? objMap.get(campaignId) : undefined,
+      adset_optimization_goal: meta?.optimization_goal,
+      adset_destination_type: meta?.destination_type,
+    }
+  })
+}
+
+export async function getAdInsights(accountId: string, timeRange?: string, datePreset?: string) {
+  const params: Record<string, string> = {
+    fields: [
+      'ad_name', 'ad_id', 'adset_name', 'adset_id', 'campaign_name', 'campaign_id',
+      'spend', 'impressions', 'reach', 'frequency', 'clicks', 'ctr', 'cpc', 'cpm',
+      'actions', 'action_values', 'cost_per_action_type', 'purchase_roas',
+      'quality_ranking', 'engagement_rate_ranking', 'conversion_rate_ranking',
+    ].join(','),
+    level: 'ad',
+    limit: '100',
+  }
+
+  if (timeRange) {
+    params.time_range = timeRange
+  } else if (datePreset) {
+    params.date_preset = datePreset
+  } else {
+    params.date_preset = 'last_7d'
+  }
+
+  const [rows, objMap, adsetMap] = await Promise.all([
+    fetchAllPages(`/${accountId}/insights`, params),
+    getCampaignObjectives(accountId).catch(() => new Map<string, string>()),
+    getAdSetMeta(accountId).catch(() => new Map<string, AdSetMeta>()),
+  ])
+  return rows.map((r) => {
+    const meta = r.adset_id ? adsetMap.get(r.adset_id) : undefined
+    const campaignId = meta?.campaign_id || r.campaign_id
+    return {
+      ...r,
+      campaign_objective: campaignId ? objMap.get(campaignId) : undefined,
+      adset_optimization_goal: meta?.optimization_goal,
+      adset_destination_type: meta?.destination_type,
+    }
+  })
+}
+
+export async function getEntityTimeseries(
+  accountId: string,
+  level: 'campaign' | 'adset' | 'ad',
+  filterField: string,
+  entityId: string,
+  timeRange?: string,
+  datePreset?: string
+) {
+  const params: Record<string, string> = {
+    fields: [
+      'date_start', 'date_stop',
+      'spend', 'impressions', 'reach', 'frequency', 'clicks', 'ctr', 'cpc', 'cpm',
+      'actions', 'action_values', 'cost_per_action_type', 'purchase_roas',
+    ].join(','),
+    level,
+    time_increment: '1',
+    limit: '500',
+    filtering: JSON.stringify([{ field: filterField, operator: 'EQUAL', value: entityId }]),
+  }
+
+  if (timeRange) {
+    params.time_range = timeRange
+  } else if (datePreset) {
+    params.date_preset = datePreset
+  } else {
+    params.date_preset = 'last_7d'
+  }
+
+  const data = await metaFetch(`/${accountId}/insights`, params)
+  return data.data || []
+}

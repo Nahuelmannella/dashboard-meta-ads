@@ -90,4 +90,133 @@ export function extractCostPerPurchase(row: InsightRow): number {
     extractAction(row.cost_per_action_type, 'purchase') ||
     extractAction(row.cost_per_action_type, 'offsite_conversion.fb_pixel_purchase') ||
     extractAction(row.cost_per_action_type, 'omni_purchase')
- 
+  )
+}
+
+export function extractRoas(row: InsightRow): number {
+  if (row.purchase_roas && row.purchase_roas.length > 0) {
+    return parseFloat(row.purchase_roas[0].value) || 0
+  }
+  return 0
+}
+
+export function extractAddToCart(row: InsightRow): number {
+  return (
+    extractAction(row.actions, 'add_to_cart') ||
+    extractAction(row.actions, 'offsite_conversion.fb_pixel_add_to_cart') ||
+    extractAction(row.actions, 'omni_add_to_cart')
+  )
+}
+
+export function extractInitiateCheckout(row: InsightRow): number {
+  return (
+    extractAction(row.actions, 'initiate_checkout') ||
+    extractAction(row.actions, 'offsite_conversion.fb_pixel_initiate_checkout') ||
+    extractAction(row.actions, 'omni_initiated_checkout')
+  )
+}
+
+export function extractLeads(row: InsightRow): number {
+  return (
+    extractAction(row.actions, 'lead') ||
+    extractAction(row.actions, 'offsite_conversion.fb_pixel_lead') ||
+    extractAction(row.actions, 'omni_lead')
+  )
+}
+
+export function extractCostPerLead(row: InsightRow): number {
+  return (
+    extractAction(row.cost_per_action_type, 'lead') ||
+    extractAction(row.cost_per_action_type, 'offsite_conversion.fb_pixel_lead') ||
+    extractAction(row.cost_per_action_type, 'omni_lead')
+  )
+}
+
+export function extractMessages(row: InsightRow): number {
+  return (
+    extractAction(row.actions, 'onsite_conversion.messaging_first_reply') ||
+    extractAction(row.actions, 'onsite_conversion.messaging_conversation_started_7d') ||
+    extractAction(row.actions, 'on_facebook_messaging_first_reply')
+  )
+}
+
+export function extractCostPerMessage(row: InsightRow): number {
+  return (
+    extractAction(row.cost_per_action_type, 'onsite_conversion.messaging_first_reply') ||
+    extractAction(row.cost_per_action_type, 'onsite_conversion.messaging_conversation_started_7d') ||
+    extractAction(row.cost_per_action_type, 'on_facebook_messaging_first_reply')
+  )
+}
+
+export interface PrimaryResult {
+  objective: 'sales' | 'leads' | 'messages' | 'awareness' | 'other'
+  value: number
+  cost: number
+  label: string
+  costLabel: string
+}
+
+function classifyObjective(row: InsightRow): PrimaryResult['objective'] {
+  const obj = (row.campaign_objective || '').toUpperCase()
+  const optGoal = (row.adset_optimization_goal || '').toUpperCase()
+  const dest = (row.adset_destination_type || '').toUpperCase()
+
+  if (obj.includes('SALES') || obj === 'CONVERSIONS' || obj === 'PRODUCT_CATALOG_SALES') return 'sales'
+  if (obj.includes('LEAD') || optGoal.includes('LEAD')) return 'leads'
+  if (obj.includes('MESSAGE') || dest === 'MESSENGER' || dest === 'WHATSAPP' || optGoal === 'CONVERSATIONS') return 'messages'
+  if (obj.includes('AWARENESS') || obj.includes('REACH') || obj === 'BRAND_AWARENESS') return 'awareness'
+
+  // Fallback: infer from data
+  if (extractPurchases(row) > 0) return 'sales'
+  if (extractLeads(row) > 0) return 'leads'
+  if (extractMessages(row) > 0) return 'messages'
+
+  return 'other'
+}
+
+export function getPrimaryResult(row: InsightRow): PrimaryResult {
+  const objective = classifyObjective(row)
+
+  switch (objective) {
+    case 'sales':
+      return {
+        objective,
+        value: extractPurchases(row),
+        cost: extractCostPerPurchase(row),
+        label: 'Compras',
+        costLabel: 'Costo/Compra',
+      }
+    case 'leads':
+      return {
+        objective,
+        value: extractLeads(row),
+        cost: extractCostPerLead(row),
+        label: 'Leads',
+        costLabel: 'Costo/Lead',
+      }
+    case 'messages':
+      return {
+        objective,
+        value: extractMessages(row),
+        cost: extractCostPerMessage(row),
+        label: 'Mensajes',
+        costLabel: 'Costo/Mensaje',
+      }
+    case 'awareness':
+      return {
+        objective,
+        value: parseFloat(row.reach) || 0,
+        cost: parseFloat(row.cpm) || 0,
+        label: 'Alcance',
+        costLabel: 'CPM',
+      }
+    default:
+      return {
+        objective: 'other',
+        value: extractAction(row.actions, 'link_click') || parseFloat(row.clicks) || 0,
+        cost: parseFloat(row.cpc) || 0,
+        label: 'Clicks',
+        costLabel: 'CPC',
+      }
+  }
+}
