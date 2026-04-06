@@ -418,6 +418,16 @@ body {
   background: var(--bg-hover);
 }
 
+.audit-card-clickable:hover {
+  transform: translateX(2px);
+  transition: transform 0.15s, background 0.15s;
+}
+
+.audit-card-clickable:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
 .audit-card.audit-critical {
   border-left-color: var(--accent-red);
   background: rgba(248, 113, 113, 0.05);
@@ -1067,6 +1077,38 @@ th:first-child::after {
 
 ::-webkit-scrollbar-corner {
   background: transparent;
+}
+
+/* Detail panel — Summary KPIs */
+.summary-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.kpi-item {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kpi-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.kpi-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
 }
 
 /* Detail panel diagnostics */

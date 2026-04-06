@@ -11,6 +11,7 @@ import { AuditPanel } from '../common/AuditPanel'
 import type { InsightRow } from '../../types/meta'
 import { extractPurchases, extractCostPerPurchase, extractRoas } from '../../types/meta'
 import { getHealthSummary, auditRows } from '../../lib/auditEngine'
+import type { AuditRecommendation } from '../../types/audit'
 
 function RankingBadge({ value }: { value?: string }) {
   if (!value || value === 'UNKNOWN') return <span style={{ color: 'var(--text-muted)' }}>—</span>
@@ -166,6 +167,19 @@ export function AdsTab() {
 
   const activeIndex = selectedEntity?.level === 'ads' ? selectedIndex : null
 
+  const handleAuditSelect = (rec: AuditRecommendation) => {
+    const idx = rows.findIndex((r) => (r.ad_id || '') === rec.entityId)
+    if (idx === -1) return
+    const row = rows[idx]
+    setSelectedIndex(idx)
+    selectEntity({
+      level: 'ads',
+      id: row.ad_id || '',
+      name: row.ad_name || 'Sin nombre',
+      row,
+    })
+  }
+
   const tableFilters: FilterConfig<InsightRow>[] = [
     {
       key: 'campaign',
@@ -184,7 +198,7 @@ export function AdsTab() {
   return (
     <>
       <HealthBanner summary={healthSummary} />
-      <AuditPanel recommendations={recommendations} />
+      <AuditPanel recommendations={recommendations} onSelect={handleAuditSelect} />
       <DataTable
         columns={columns}
         data={rows}

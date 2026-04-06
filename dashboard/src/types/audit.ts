@@ -3,6 +3,7 @@ export type AuditSeverity = 'critical' | 'warning' | 'opportunity' | 'info'
 export interface AuditRecommendation {
   id: string
   severity: AuditSeverity
+  entityId: string
   entityName: string
   entityLevel: 'campaign' | 'adset' | 'ad'
   title: string

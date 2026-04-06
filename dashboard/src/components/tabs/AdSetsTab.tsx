@@ -11,6 +11,7 @@ import { AuditPanel } from '../common/AuditPanel'
 import type { InsightRow } from '../../types/meta'
 import { extractPurchases, extractCostPerPurchase, extractRoas } from '../../types/meta'
 import { getHealthSummary, auditRows } from '../../lib/auditEngine'
+import type { AuditRecommendation } from '../../types/audit'
 
 export function AdSetsTab() {
   const { selectedAccount } = useAccount()
@@ -149,6 +150,19 @@ export function AdSetsTab() {
 
   const activeIndex = selectedEntity?.level === 'adsets' ? selectedIndex : null
 
+  const handleAuditSelect = (rec: AuditRecommendation) => {
+    const idx = rows.findIndex((r) => (r.adset_id || '') === rec.entityId)
+    if (idx === -1) return
+    const row = rows[idx]
+    setSelectedIndex(idx)
+    selectEntity({
+      level: 'adsets',
+      id: row.adset_id || '',
+      name: row.adset_name || 'Sin nombre',
+      row,
+    })
+  }
+
   const tableFilters: FilterConfig<InsightRow>[] = [
     {
       key: 'campaign',
@@ -161,7 +175,7 @@ export function AdSetsTab() {
   return (
     <>
       <HealthBanner summary={healthSummary} />
-      <AuditPanel recommendations={recommendations} />
+      <AuditPanel recommendations={recommendations} onSelect={handleAuditSelect} />
       <DataTable
         columns={columns}
         data={rows}

@@ -4,6 +4,7 @@ import { useSensitiveData } from '../../context/SensitiveDataContext'
 
 interface AuditPanelProps {
   recommendations: AuditRecommendation[]
+  onSelect?: (rec: AuditRecommendation) => void
 }
 
 const SEVERITY_CONFIG = {
@@ -13,7 +14,7 @@ const SEVERITY_CONFIG = {
   info: { icon: 'ℹ️', label: 'INFO', className: 'audit-info' },
 }
 
-export function AuditPanel({ recommendations }: AuditPanelProps) {
+export function AuditPanel({ recommendations, onSelect }: AuditPanelProps) {
   const [isExpanded, setIsExpanded] = useState(true)
   const { isHidden } = useSensitiveData()
   const blurClass = isHidden ? 'sensitive-hidden' : 'sensitive-visible'
@@ -70,7 +71,12 @@ export function AuditPanel({ recommendations }: AuditPanelProps) {
           {recommendations.map((rec) => {
             const config = SEVERITY_CONFIG[rec.severity]
             return (
-              <div key={rec.id} className={`audit-card ${config.className}`}>
+              <div
+                key={rec.id}
+                className={`audit-card ${config.className}${onSelect ? ' audit-card-clickable' : ''}`}
+                onClick={onSelect ? () => onSelect(rec) : undefined}
+                style={onSelect ? { cursor: 'pointer' } : undefined}
+              >
                 <div className="audit-card-header">
                   <span className="audit-card-severity">
                     <span className="audit-card-severity-icon">{config.icon}</span>

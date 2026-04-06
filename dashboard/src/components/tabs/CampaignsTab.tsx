@@ -10,8 +10,8 @@ import { HealthBanner } from '../common/HealthBanner'
 import { AuditPanel } from '../common/AuditPanel'
 import type { InsightRow } from '../../types/meta'
 import { extractPurchases, extractCostPerPurchase, extractRoas } from '../../types/meta'
-import { getHealthSummary } from '../../lib/auditEngine'
-import { auditRows } from '../../lib/auditEngine'
+import { getHealthSummary, auditRows } from '../../lib/auditEngine'
+import type { AuditRecommendation } from '../../types/audit'
 
 export function CampaignsTab() {
   const { selectedAccount } = useAccount()
@@ -132,10 +132,23 @@ export function CampaignsTab() {
 
   const activeIndex = selectedEntity?.level === 'campaigns' ? selectedIndex : null
 
+  const handleAuditSelect = (rec: AuditRecommendation) => {
+    const idx = rows.findIndex((r) => (r.campaign_id || '') === rec.entityId)
+    if (idx === -1) return
+    const row = rows[idx]
+    setSelectedIndex(idx)
+    selectEntity({
+      level: 'campaigns',
+      id: row.campaign_id || '',
+      name: row.campaign_name || 'Sin nombre',
+      row,
+    })
+  }
+
   return (
     <>
       <HealthBanner summary={healthSummary} />
-      <AuditPanel recommendations={recommendations} />
+      <AuditPanel recommendations={recommendations} onSelect={handleAuditSelect} />
       <DataTable
         columns={columns}
         data={rows}

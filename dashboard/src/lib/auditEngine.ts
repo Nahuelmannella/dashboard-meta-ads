@@ -88,6 +88,7 @@ export function auditRows(rows: InsightRow[], level: EntityLevel): AuditRecommen
       recs.push({
         id: `roas-critical-${id}`,
         severity: 'critical',
+        entityId: id,
         entityName: name,
         entityLevel: level,
         title: 'ROAS por debajo de punto de equilibrio',
@@ -104,6 +105,7 @@ export function auditRows(rows: InsightRow[], level: EntityLevel): AuditRecommen
       recs.push({
         id: `no-conv-${id}`,
         severity: sev,
+        entityId: id,
         entityName: name,
         entityLevel: level,
         title: 'Gasto sin conversiones',
@@ -119,6 +121,7 @@ export function auditRows(rows: InsightRow[], level: EntityLevel): AuditRecommen
       recs.push({
         id: `ctr-low-${id}`,
         severity: 'warning',
+        entityId: id,
         entityName: name,
         entityLevel: level,
         title: 'CTR muy bajo',
@@ -135,6 +138,7 @@ export function auditRows(rows: InsightRow[], level: EntityLevel): AuditRecommen
       recs.push({
         id: `freq-${id}`,
         severity: sev,
+        entityId: id,
         entityName: name,
         entityLevel: level,
         title: 'Fatiga de audiencia',
@@ -150,6 +154,7 @@ export function auditRows(rows: InsightRow[], level: EntityLevel): AuditRecommen
       recs.push({
         id: `cpc-high-${id}`,
         severity: 'warning',
+        entityId: id,
         entityName: name,
         entityLevel: level,
         title: 'CPC muy alto',
@@ -165,6 +170,7 @@ export function auditRows(rows: InsightRow[], level: EntityLevel): AuditRecommen
       recs.push({
         id: `cpm-high-${id}`,
         severity: 'warning',
+        entityId: id,
         entityName: name,
         entityLevel: level,
         title: 'CPM elevado',
@@ -182,6 +188,7 @@ export function auditRows(rows: InsightRow[], level: EntityLevel): AuditRecommen
         recs.push({
           id: `quality-${id}`,
           severity: 'warning',
+          entityId: id,
           entityName: name,
           entityLevel: level,
           title: 'Calidad de anuncio baja',
@@ -198,6 +205,7 @@ export function auditRows(rows: InsightRow[], level: EntityLevel): AuditRecommen
       recs.push({
         id: `ctr-roas-mismatch-${id}`,
         severity: 'warning',
+        entityId: id,
         entityName: name,
         entityLevel: level,
         title: 'Buen CTR pero bajo ROAS',
@@ -213,6 +221,7 @@ export function auditRows(rows: InsightRow[], level: EntityLevel): AuditRecommen
       recs.push({
         id: `scale-${id}`,
         severity: 'opportunity',
+        entityId: id,
         entityName: name,
         entityLevel: level,
         title: '¡Oportunidad de escalar!',
@@ -223,13 +232,14 @@ export function auditRows(rows: InsightRow[], level: EntityLevel): AuditRecommen
       })
     }
 
-    // Rule 10: Budget concentration
-    if (totalSpend > 0 && spend / totalSpend > T.BUDGET_CONCENTRATION_WARNING) {
+    // Rule 10: Budget concentration (only meaningful with multiple elements)
+    if (rows.length > 1 && totalSpend > 0 && spend / totalSpend > T.BUDGET_CONCENTRATION_WARNING) {
       const pct = (spend / totalSpend) * 100
       const sev = spend / totalSpend > T.BUDGET_CONCENTRATION_CRITICAL ? 'warning' : 'info'
       recs.push({
         id: `concentration-${id}`,
         severity: sev,
+        entityId: id,
         entityName: name,
         entityLevel: level,
         title: 'Concentración de presupuesto',
