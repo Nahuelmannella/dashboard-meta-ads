@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react'
 import { useMetaApi } from '../../hooks/useMetaApi'
 import { useAccount } from '../../context/AccountContext'
 import { useSelection } from '../../context/SelectionContext'
-import { DataTable, type Column } from '../common/DataTable'
+import { useIncluded } from '../../context/IncludedContext'
+import { DataTable, type Column, type IncludeToggleConfig } from '../common/DataTable'
 import { SensitiveText } from '../common/SensitiveText'
 import { SensitiveNumber } from '../common/SensitiveNumber'
 import { SkeletonTable } from '../common/SkeletonLoader'
@@ -16,6 +17,7 @@ import type { AuditRecommendation } from '../../types/audit'
 export function CampaignsTab() {
   const { selectedAccount } = useAccount()
   const { selectEntity, selectedEntity } = useSelection()
+  const { isIncluded, toggle, setBulk, excludedCount } = useIncluded()
   const { data, loading, error } = useMetaApi<InsightRow[]>('campaigns')
   const currency = selectedAccount?.currency || 'MXN'
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
@@ -159,6 +161,13 @@ export function CampaignsTab() {
         selectedRowIndex={activeIndex}
         searchPlaceholder="Buscar campana..."
         searchField={(row) => row.campaign_name || ''}
+        includeToggle={{
+          getId: (r) => r.campaign_id || '',
+          isIncluded: (r) => isIncluded('campaigns', r.campaign_id || ''),
+          toggle: (r) => toggle('campaigns', r.campaign_id || ''),
+          setBulk: (ids, include) => setBulk('campaigns', ids, include),
+          excludedCount: excludedCount('campaigns'),
+        } as IncludeToggleConfig<InsightRow>}
       />
     </>
   )

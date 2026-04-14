@@ -106,6 +106,7 @@ export async function getCampaignInsights(accountId: string, timeRange?: string,
     ].join(','),
     level: 'campaign',
     limit: '100',
+    filtering: JSON.stringify([{ field: 'campaign.effective_status', operator: 'IN', value: ['ACTIVE'] }]),
   }
 
   if (timeRange) {
@@ -135,6 +136,7 @@ export async function getAdSetInsights(accountId: string, timeRange?: string, da
     ].join(','),
     level: 'adset',
     limit: '100',
+    filtering: JSON.stringify([{ field: 'adset.effective_status', operator: 'IN', value: ['ACTIVE'] }]),
   }
 
   if (timeRange) {
@@ -172,6 +174,7 @@ export async function getAdInsights(accountId: string, timeRange?: string, dateP
     ].join(','),
     level: 'ad',
     limit: '100',
+    filtering: JSON.stringify([{ field: 'ad.effective_status', operator: 'IN', value: ['ACTIVE'] }]),
   }
 
   if (timeRange) {

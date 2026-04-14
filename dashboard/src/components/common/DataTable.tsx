@@ -19,6 +19,14 @@ export interface FilterConfig<T> {
   matches: (row: T, value: string) => boolean
 }
 
+export interface IncludeToggleConfig<T> {
+  getId: (row: T) => string
+  isIncluded: (row: T) => boolean
+  toggle: (row: T) => void
+  setBulk: (ids: string[], include: boolean) => void
+  excludedCount: number
+}
+
 interface DataTableProps<T> {
   columns: Column<T>[]
   data: T[]
@@ -28,6 +36,7 @@ interface DataTableProps<T> {
   searchPlaceholder?: string
   searchField?: (row: T) => string
   filters?: FilterConfig<T>[]
+  includeToggle?: IncludeToggleConfig<T>
 }
 
 const HEALTH_STYLES: Record<HealthStatus, { border: string; bg: string; dot: string; icon: string }> = {
@@ -78,6 +87,7 @@ export function DataTable<T>({
   searchPlaceholder = 'Buscar...',
   searchField,
   filters,
+  includeToggle,
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<string>('spend')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
@@ -205,6 +215,26 @@ export function DataTable<T>({
           {(searchQuery || Object.values(activeFilters).some(v => v)) && (
             <span className="table-result-count">{filteredData.length} resultados</span>
           )}
+          {includeToggle && (
+            <>
+              {includeToggle.excludedCount > 0 && (
+                <span className="table-result-count" style={{ color: 'var(--accent-yellow)' }}>
+                  {includeToggle.excludedCount} excluidas
+                </span>
+              )}
+              <button
+                className="table-toolbar-btn"
+                onClick={() => {
+                  const ids = sortedData.map(r => includeToggle.getId(r))
+                  const anyExcluded = ids.some(id => !data.find(d => includeToggle.getId(d) === id && includeToggle.isIncluded(d)))
+                  includeToggle.setBulk(ids, anyExcluded)
+                }}
+                title="Incluir o excluir todos los visibles en los totales"
+              >
+                {includeToggle.excludedCount > 0 ? 'Incluir todo' : 'Excluir todo'}
+              </button>
+            </>
+          )}
           {lowPriorityCols.length > 0 && (
             <div style={{ position: 'relative' }}>
               <button className="table-toolbar-btn" onClick={() => setShowColumnPicker(!showColumnPicker)}>
@@ -244,6 +274,19 @@ export function DataTable<T>({
         <table>
           <thead>
             <tr>
+              {includeToggle && (
+                <th style={{ width: 32, minWidth: 32, padding: '8px 4px' }} title="Incluir en totales">
+                  <input
+                    type="checkbox"
+                    onClick={(e) => e.stopPropagation()}
+                    checked={includeToggle.excludedCount === 0 && data.length > 0}
+                    onChange={(e) => {
+                      const ids = data.map(r => includeToggle.getId(r))
+                      includeToggle.setBulk(ids, e.target.checked)
+                    }}
+                  />
+                </th>
+              )}
               <th className="health-header" style={{ width: 28, minWidth: 28, padding: '8px 4px' }}></th>
               {visibleColumns.map((col) => (
                 <th
@@ -269,6 +312,7 @@ export function DataTable<T>({
               const isSelected = selectedRowIndex === actualIndex
               const { style: alertStyle, health } = getRowAlertStyle(row)
               const healthConfig = HEALTH_STYLES[health]
+              const isExcluded = includeToggle ? !includeToggle.isIncluded(row) : false
               return (
                 <tr
                   key={i}
@@ -277,8 +321,18 @@ export function DataTable<T>({
                   style={{
                     cursor: onRowClick ? 'pointer' : undefined,
                     ...(isSelected ? { borderLeft: '3px solid var(--accent-blue)', background: 'var(--bg-hover)' } : alertStyle),
+                    ...(isExcluded ? { opacity: 0.45 } : {}),
                   }}
                 >
+                  {includeToggle && (
+                    <td style={{ padding: '8px 4px', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={includeToggle.isIncluded(row)}
+                        onChange={() => includeToggle.toggle(row)}
+                      />
+                    </td>
+                  )}
                   <td className="health-cell">
                     <span
                       className={`health-dot health-${health}`}

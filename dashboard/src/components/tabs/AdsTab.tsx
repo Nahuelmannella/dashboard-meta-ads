@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react'
 import { useMetaApi } from '../../hooks/useMetaApi'
 import { useAccount } from '../../context/AccountContext'
 import { useSelection } from '../../context/SelectionContext'
-import { DataTable, type Column, type FilterConfig } from '../common/DataTable'
+import { useIncluded } from '../../context/IncludedContext'
+import { DataTable, type Column, type FilterConfig, type IncludeToggleConfig } from '../common/DataTable'
 import { SensitiveText } from '../common/SensitiveText'
 import { SensitiveNumber } from '../common/SensitiveNumber'
 import { SkeletonTable } from '../common/SkeletonLoader'
@@ -37,6 +38,7 @@ function RankingBadge({ value }: { value?: string }) {
 export function AdsTab() {
   const { selectedAccount } = useAccount()
   const { selectEntity, selectedEntity } = useSelection()
+  const { isIncluded, toggle, setBulk, excludedCount } = useIncluded()
   const { data, loading, error } = useMetaApi<InsightRow[]>('ads')
   const currency = selectedAccount?.currency || 'MXN'
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
@@ -210,6 +212,13 @@ export function AdsTab() {
         searchPlaceholder="Buscar anuncio..."
         searchField={(row) => `${row.ad_name || ''} ${row.adset_name || ''}`}
         filters={tableFilters}
+        includeToggle={{
+          getId: (r) => r.ad_id || '',
+          isIncluded: (r) => isIncluded('ads', r.ad_id || ''),
+          toggle: (r) => toggle('ads', r.ad_id || ''),
+          setBulk: (ids, include) => setBulk('ads', ids, include),
+          excludedCount: excludedCount('ads'),
+        } as IncludeToggleConfig<InsightRow>}
       />
     </>
   )

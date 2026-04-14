@@ -125,6 +125,65 @@ app.get('/api/accounts/:id/insights/comparison', async (req, res) => {
   }
 })
 
+app.get('/api/accounts/:id/campaigns/comparison', async (req, res) => {
+  try {
+    const { timeRange, datePreset } = parseDateParams(req.query)
+    const compareMode = (req.query.compare_mode as string) || 'previous'
+    const current = await getCampaignInsights(req.params.id, timeRange, datePreset)
+    let previous: any[] = []
+    if (compareMode !== 'none') {
+      const prevRange = getComparisonRange(req.query, compareMode)
+      if (prevRange) {
+        try { previous = await getCampaignInsights(req.params.id, prevRange.timeRange) } catch { /* ignore */ }
+      }
+    }
+    res.json({ current, previous, compareMode })
+  } catch (err: any) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+app.get('/api/accounts/:id/campaigns/timeseries', async (req, res) => {
+  try {
+    const { timeRange, datePreset } = parseDateParams(req.query)
+    const params: Record<string, string> = {
+      fields: [
+        'campaign_id', 'date_start', 'date_stop',
+        'spend', 'impressions', 'reach', 'frequency', 'clicks', 'ctr', 'cpc', 'cpm',
+        'actions', 'action_values', 'cost_per_action_type', 'purchase_roas',
+      ].join(','),
+      level: 'campaign',
+      time_increment: '1',
+      limit: '500',
+      filtering: JSON.stringify([{ field: 'campaign.effective_status', operator: 'IN', value: ['ACTIVE'] }]),
+    }
+    if (timeRange) params.time_range = timeRange
+    else if (datePreset) params.date_preset = datePreset
+    else params.date_preset = 'last_7d'
+
+    const url = new URL(`https://graph.facebook.com/v21.0/${req.params.id}/insights`)
+    const { META_ACCESS_TOKEN, META_APP_SECRET } = await import('./config.ts')
+    const { createHmac } = await import('crypto')
+    const proof = createHmac('sha256', META_APP_SECRET).update(META_ACCESS_TOKEN).digest('hex')
+    url.searchParams.set('access_token', META_ACCESS_TOKEN)
+    url.searchParams.set('appsecret_proof', proof)
+    for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value)
+
+    let all: any[] = []
+    let nextUrl: string | null = url.toString()
+    while (nextUrl) {
+      const response = await fetch(nextUrl)
+      const json: any = await response.json()
+      if (json.error) throw new Error(json.error.message)
+      all = all.concat(json.data || [])
+      nextUrl = json.paging?.next || null
+    }
+    res.json({ data: all })
+  } catch (err: any) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 app.get('/api/accounts/:id/insights/timeseries', async (req, res) => {
   try {
     const { timeRange, datePreset } = parseDateParams(req.query)

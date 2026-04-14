@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react'
 import { useMetaApi } from '../../hooks/useMetaApi'
 import { useAccount } from '../../context/AccountContext'
 import { useSelection } from '../../context/SelectionContext'
-import { DataTable, type Column, type FilterConfig } from '../common/DataTable'
+import { useIncluded } from '../../context/IncludedContext'
+import { DataTable, type Column, type FilterConfig, type IncludeToggleConfig } from '../common/DataTable'
 import { SensitiveText } from '../common/SensitiveText'
 import { SensitiveNumber } from '../common/SensitiveNumber'
 import { SkeletonTable } from '../common/SkeletonLoader'
@@ -16,6 +17,7 @@ import type { AuditRecommendation } from '../../types/audit'
 export function AdSetsTab() {
   const { selectedAccount } = useAccount()
   const { selectEntity, selectedEntity } = useSelection()
+  const { isIncluded, toggle, setBulk, excludedCount } = useIncluded()
   const { data, loading, error } = useMetaApi<InsightRow[]>('adsets')
   const currency = selectedAccount?.currency || 'MXN'
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
@@ -187,6 +189,13 @@ export function AdSetsTab() {
         searchPlaceholder="Buscar conjunto de anuncios..."
         searchField={(row) => `${row.adset_name || ''} ${row.campaign_name || ''}`}
         filters={tableFilters}
+        includeToggle={{
+          getId: (r) => r.adset_id || '',
+          isIncluded: (r) => isIncluded('adsets', r.adset_id || ''),
+          toggle: (r) => toggle('adsets', r.adset_id || ''),
+          setBulk: (ids, include) => setBulk('adsets', ids, include),
+          excludedCount: excludedCount('adsets'),
+        } as IncludeToggleConfig<InsightRow>}
       />
     </>
   )

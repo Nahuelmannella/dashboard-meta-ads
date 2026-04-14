@@ -3,6 +3,7 @@ import { SensitiveDataProvider } from './context/SensitiveDataContext'
 import { AccountProvider, useAccount } from './context/AccountContext'
 import { DateRangeProvider } from './context/DateRangeContext'
 import { SelectionProvider } from './context/SelectionContext'
+import { IncludedProvider } from './context/IncludedContext'
 import { Header } from './components/layout/Header'
 import { TabNav } from './components/layout/TabNav'
 import { MetricsBar } from './components/tabs/MetricsBar'
@@ -51,7 +52,9 @@ export default function App() {
       <AccountProvider>
         <DateRangeProvider>
           <SelectionProvider>
-            <DashboardContent />
+            <IncludedProvider>
+              <DashboardContent />
+            </IncludedProvider>
           </SelectionProvider>
         </DateRangeProvider>
       </AccountProvider>
